@@ -1,0 +1,160 @@
+'''
+A Convolutional Network implementation example using TensorFlow library.
+This example is using the MNIST database of handwritten digits
+(http://yann.lecun.com/exdb/mnist/)
+Author: Aymeric Damien
+Project: https://github.com/aymericdamien/TensorFlow-Examples/
+'''
+
+from __future__ import print_function
+
+import tensorflow as tf
+import timeit
+import numpy as np
+import math
+
+# Import MNIST data
+from tensorflow.examples.tutorials.mnist import input_data
+mnist = input_data.read_data_sets("/home/drevil/Downloads/MNINST/", one_hot=True)
+
+# Parameters
+learning_rate = 0.001
+training_iters = 200000
+batch_size = 128
+display_step = 10
+
+# Network Parameters
+n_input = 784 # MNIST data input (img shape: 28*28)
+n_classes = 10 # MNIST total classes (0-9 digits)
+dropout = 0.75 # Dropout, probability to keep units
+
+# tf Graph input
+x = tf.placeholder(tf.float32, [None, n_input])
+y = tf.placeholder(tf.float32, [None, n_classes])
+keep_prob = tf.placeholder(tf.float32) #dropout (keep probability)
+
+def xavier_init(n_inputs, n_outputs):
+    # 6 was used in the paper.
+    stddev = math.sqrt(6.0 / (n_inputs + n_outputs))
+    return stddev
+
+
+# Create model
+def simple_net(x, weights, biases, dropout):
+ 
+    # Reshape conv2 output to fit fully connected layer input
+    fc1 = tf.reshape(x, [-1, weights['wd1'].get_shape().as_list()[0]])
+    fc1 = tf.add(tf.matmul(fc1, weights['wd1']), biases['bd1'])
+    fc1 = tf.nn.relu(fc1)
+  
+    # Output, class prediction
+    out = tf.add(tf.matmul(fc1, weights['out']), biases['bout'])
+    return out
+
+# Store layers weight & bias
+
+wd1 = tf.Variable(tf.truncated_normal([28*28, 100],
+                                      stddev=xavier_init(28*28,100)))
+wout = tf.Variable(tf.truncated_normal([100, n_classes],
+                                       stddev=xavier_init(100,10)))
+
+bd1 = tf.Variable(tf.truncated_normal([100],stddev=1.0))
+bout = tf.Variable(tf.truncated_normal([n_classes],stddev=1.0))
+
+weights = {
+    'wd1': wd1,
+    'out': wout
+}
+
+
+biases = {
+    'bd1': bd1,
+    'bout': bout
+}
+
+
+# Construct model
+pred = simple_net(x, weights, biases, keep_prob)
+
+cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(pred, y))
+
+optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(cost)
+
+ # Evaluate model
+correct_pred = tf.equal(tf.argmax(pred, 1), tf.argmax(y, 1))
+accuracy = tf.reduce_mean(tf.cast(correct_pred, tf.float32))
+
+# Initializing the variables
+init = tf.initialize_all_variables()
+
+# Launch the graph
+with tf.Session() as sess:
+    sess.run(init)
+    step = 1
+    # Keep training until reach max iterations
+    while step * batch_size < training_iters:
+        batch_x, batch_y = mnist.train.next_batch(batch_size)
+        # Run optimization op (backprop)
+        
+        sess.run(optimizer, feed_dict={x: batch_x, y: batch_y, 
+                                        keep_prob: dropout})
+
+    
+      
+        if step % display_step == 0:
+            # Calculate batch loss and accuracy
+            loss, acc = sess.run([cost, accuracy], feed_dict={x: batch_x,
+                                                              y: batch_y,
+                                                              keep_prob: 1.})
+       
+            print("Iter " + str(step*batch_size) + ", Minibatch Loss= " + \
+                  "{:.6f}".format(loss) + ", Training Accuracy= " + \
+                  "{:.5f}".format(acc))
+        step += 1
+    print("Optimization Finished!")
+ 
+    # Calculate accuracy for 256 mnist test images
+
+    accuracy = sess.run(accuracy, feed_dict={x: mnist.test.images[:256],
+                                      y: mnist.test.labels[:256],
+                                      keep_prob: 1.})
+    print("*******TEST ACCURACY*******************", accuracy)
+    # Get the biases and write them to bin files
+  
+    bd1, bout = sess.run([bd1,bout])
+
+    bdtemp=np.ones([100], dtype=np.float32)
+    bdtemp[:] = bd1[:]
+    
+    outbytes=bytearray(bdtemp)
+    newFile = open("./ip1D.bias.bin", "wb")
+    newFile.write(outbytes)
+    newFile.close();
+
+    bouttemp=np.ones([10], dtype=np.float32)
+    bouttemp[:] = bout[:]
+    outbytes=bytearray(bouttemp)
+    newFile = open("./ip2D.bias.bin", "wb")
+    newFile.write(outbytes)
+    newFile.close();
+
+    # Get the weights and write them to bin files
+    wd1, wout = sess.run([wd1,wout])
+
+    wd1 = np.reshape(wd1,(784,100)) 
+    wd1temp=np.ones([784,100], dtype=np.float32)
+    wd1temp[:,:] = wd1[:,:]
+    outbytes=bytearray(np.swapaxes(wd1temp,0,1))
+    newFile = open("./ip1D.bin", "wb")
+    newFile.write(outbytes)
+    newFile.close();
+
+   
+    wout = np.reshape(wout,(100,10))
+    wouttemp=np.ones([100,10], dtype=np.float32)
+    wouttemp[:,:] = wout[:,:]
+    outbytes=bytearray(np.swapaxes(wouttemp,0,1))
+    newFile = open("./ip2D.bin", "wb")
+    newFile.write(outbytes)
+    newFile.close();
+
