@@ -9,9 +9,7 @@ def softmax(x):
     return e_x/e_x.sum(axis=0)
 
 def simple_relu(x):
-    #print("x: ", x)
     out = np.maximum(0,x)
-    #print("after: ", out)
     return out
 
 def plotImage(mess, img):
@@ -51,26 +49,25 @@ with open("conv1.bin", "rb") as f:
    testc1=np.reshape(c1data, (5,5,1,20))
 f.close()
 
-with open("ip1.bin", "rb") as f:
-   fc1data = struct.unpack('1960000f', f.read(7840000))
-f.close()
-with open("ip1.bias.bin", "rb") as f:
-   fc1bias = struct.unpack('500f', f.read(2000))
-f.close()
-
-with open("ip2.bin", "rb") as f:
-    fc2data = struct.unpack('5000f', f.read(20000))
-f.close()
-with open("ip2.bias.bin", "rb") as f:
-   fc2bias = struct.unpack('10f', f.read(40))
-f.close()
-
-
 with open("conv1.bias.bin", "rb") as f:
    c1bias = struct.unpack('20f',f.read(80))
 f.close()
 
-imfiles = glob.glob("/home/drevil/Downloads/TFGPUExample/MNISTDATA/*.pgm")
+with open("fclayer1.bin", "rb") as f:
+   fc1data = struct.unpack('1960000f', f.read(7840000))
+f.close()
+with open("fclayer1.bias.bin", "rb") as f:
+   fc1bias = struct.unpack('500f', f.read(2000))
+f.close()
+
+with open("fclayer2.bin", "rb") as f:
+    fc2data = struct.unpack('5000f', f.read(20000))
+f.close()
+with open("fclayer2.bias.bin", "rb") as f:
+   fc2bias = struct.unpack('10f', f.read(40))
+f.close()
+
+imfiles = glob.glob("../MNISTDATA/*.pgm")
 
 for x in xrange(20):
 

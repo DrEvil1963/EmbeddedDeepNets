@@ -24,27 +24,27 @@ def load_image(fname):
 def forward_pass(inp_image):
 
  #input L1 weights 784,100
- with open("ip1D.bin", "rb") as f:
+ with open("fclayer1.bin", "rb") as f:
    bytes = f.read(313600)
    L1w = struct.unpack('78400f', bytes)
    L1wA = np.reshape(L1w, (784,100))
    f.close()
 
  #input L1 biases 100
- with open("ip1D.bias.bin", "rb") as f:
+ with open("fclayer1.bias.bin", "rb") as f:
     bytes = f.read(400)
     L1b= struct.unpack('100f', bytes)
     f.close()
 
  #input L2 weights (100,10)
- with open("ip2D.bin", "rb") as f:
+ with open("fclayer2.bin", "rb") as f:
    bytes = f.read(4000)
    L2w = struct.unpack('1000f', bytes)
    L2wA = np.reshape(L2w, (100,10))
    f.close()
 
  #input L2 biases 10
- with open("ip2D.bias.bin", "rb") as f:
+ with open("fclayer2.bias.bin", "rb") as f:
     bytes = f.read(40)
     L2b= struct.unpack('10f', bytes)
     f.close()
@@ -58,7 +58,7 @@ def forward_pass(inp_image):
 
  print("L2_output: ", L2_output, "  ***ARGMAX: ", np.argmax(L2_output))
 
-imfiles = glob.glob("/home/drevil/Downloads/TFGPUExample/MNISTDATA/*.pgm")
+imfiles = glob.glob("../MNISTDATA/*.pgm")
 for x in xrange(20):
 
   with open(imfiles[x], "rb") as f:

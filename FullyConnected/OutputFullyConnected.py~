@@ -117,16 +117,16 @@ init = tf.initialize_all_variables()
 # Launch the graph
 with tf.Session() as sess:
     sess.run(init)
-    ii = 0
+    indx = 0
     # Loop over training batches
-    while ii < n_batches:
+    while indx < n_batches:
        # Print results every 2000 batches
-       if ii % 2000 == 0:
+       if indx % 2000 == 0:
           print_flag = 0
        
-       train_net(optimizer, print_flag, ii)
+       train_net(optimizer, print_flag, indx)
        print_flag = 1
-       ii += 1 
+       indx = indx + 1 
     
     print("Training Completed...")
 

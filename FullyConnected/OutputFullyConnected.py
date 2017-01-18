@@ -16,7 +16,7 @@ import math
 from tensorflow.examples.tutorials.mnist import input_data
 
 # Use a permanent directory to store the data
-mnist = input_data.read_data_sets("/home/drevil/Downloads/MNINST/", one_hot=True)
+mnist = input_data.read_data_sets("../MNISTDATA/", one_hot=True)
 
 # Parameters
 learning_rate = 0.001
@@ -26,11 +26,12 @@ n_pixels = 784 # Input Pixels (28*28=784)
 n_classes = 10 # Output Classes (0-9 digits)
 dropout = 0.75 # Drop 25% of units on each iteration to prevent overtraining
 row_major = 0 #C++ and Python store arrays in Row Major and Row Minor
+screen_update = 55 #update the screen every n iterations
 
 # tf Graph input
 x = tf.placeholder(tf.float32, [None, n_pixels])
 y = tf.placeholder(tf.float32, [None, n_classes])
-keep_prob = tf.placeholder(tf.float32)
+keep_prob = tf.placeholder(tf.float32) #dropout (keep probability)
 
 # xavier initialization (improves accuracy substantially)
 def xavier_init(n_inputs, n_outputs):
@@ -50,7 +51,7 @@ def simple_net(x, weights, biases, dropout):
     out = tf.add(tf.matmul(fc1, weights['out']), biases['bout'])
     return out
 
-def train_net(optimizer, printcode, idx):
+def train_net(optimizer, idx):
     
      batch_train, batch_truth = mnist.train.next_batch(training_batch_size)
 
@@ -58,13 +59,13 @@ def train_net(optimizer, printcode, idx):
      sess.run(optimizer, feed_dict={x: batch_train, y: batch_truth, 
                                         keep_prob: dropout})
       
-     if printcode == 0:
-     # Calculate batch loss and accuracy
+     if idx % screen_update == 0:
+       # Determine the backprop signal
        loss, acc = sess.run([cost, accuracy], feed_dict={x: batch_train,
                                                          y: batch_truth,
                                                          keep_prob: 1.})
        
-       print("Iteration: " , str(idx), "Training Accuracy: ", acc*100)
+       print("Iteration: %10u  Training Accuracy: %10f  Percent Done: %5f" % (idx,100.*acc,100.*idx/n_batches))
 
 
 def writeFile(inputarray, fname):
@@ -120,32 +121,24 @@ with tf.Session() as sess:
     indx = 0
     # Loop over training batches
     while indx < n_batches:
-       # Print results every 2000 batches
-       if indx % 2000 == 0:
-          print_flag = 0
-       
-       train_net(optimizer, print_flag, indx)
-       print_flag = 1
+       train_net(optimizer, indx)
        indx = indx + 1 
     
-    print("Training Completed...")
-
-    # Run the test images to get accuracy on hold out sample 
+    print("Training Completed.")
 
     accuracy = sess.run(accuracy, feed_dict={x: mnist.test.images[:256],
                                       y: mnist.test.labels[:256],
                                       keep_prob: 1.})
     
-    print("*******TEST ACCURACY ON 256 MNIST Test Sample: ", accuracy * 100)
+    print("TEST ACCURACY ON 256 MNIST Test Sample: ", accuracy * 100)   
     
-    # Get the biases and write them to bin files
-  
+    # Get the biases and write them to bin files  
     bd1, bout = sess.run([bd1,bout])
-    writeFile(bd1, "./ip1D.bias.bin")
-    writeFile(bout, "./ip2D.bias.bin")
+    writeFile(bd1, "./fclayer1.bias.bin")
+    writeFile(bout, "./fclayer2.bias.bin")
 
     # Get the weights and write them to bin files
     wd1, wout = sess.run([wd1,wout])
-    writeFile(wd1, "./ip1D.bin")
-    writeFile(wout, "./ip2D.bin")
+    writeFile(wd1, "./fclayer1.bin")
+    writeFile(wout, "./fclayer2.bin")
 
